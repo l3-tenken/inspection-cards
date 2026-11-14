@@ -51,6 +51,9 @@ const REVISED_MSG = '点検表が改定されたため正しく入力できな�
 
 // ---------------- ホーム ----------------
 async function showHome() {
+  // テンキーで入力中のまま「一覧」を押したときは、作業を手放す前に確定して保存する。
+  // iPad ではボタンを押してもフォーカスが移らずテンキーが開いたままなので、S を空にした後に確定の処理が走って止まっていた
+  if (S) { keypad.hide(); flushSave(); }
   S = null;
   setHeader('点検カード');
   const [sessions, profiles] = await Promise.all([listSessions(), listProfiles()]);
@@ -437,6 +440,7 @@ function endEditing() {
   if (editingRow === null) return;
   const row = editingRow;
   editingRow = null;
+  if (!S) return; // 作業を開いていない (ホームに戻った後など)
   resolveExpression(row);
   recalcFormulas();
   main.querySelector(`.card[data-row="${row}"]`)?._refresh?.();
@@ -775,6 +779,7 @@ function showCards() {
 
 // ---------------- 書き出し ----------------
 async function showExport() {
+  keypad.hide(); // 入力中の値を確定してから書き出す (式を打ったままだと、計算前の文字が書き込まれるため)
   flushSave();
   const { session, wb, sheet, cards } = S;
   const list = targetCards();
