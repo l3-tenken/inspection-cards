@@ -199,14 +199,14 @@ export function createKeypad(hooks) {
     if (e.target.matches?.('input[data-keypad]')) show(e.target);
     else if (target && !panel.contains(e.target)) hide();
   });
-  // 外付けキーボード
+  // 外付けキーボード (式を打てるよう + * / ( ) も受ける。計算は確定時に画面側で行う)
   document.addEventListener('keydown', (e) => {
     // e.isTrusted: テンキーの Enter が送る合成イベントは対象外 (拾うと次々に進んでしまう)
     if (!target || !e.isTrusted || e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return;
     const a = document.activeElement;
     if (a && a !== target && a !== document.body && a.matches('input, textarea, select')) return;
     const map = { Backspace: 'back', Enter: 'enter', ArrowUp: 'prev', ArrowDown: 'next', Escape: 'close' };
-    const act = map[e.key] ?? (/^[0-9.-]$/.test(e.key) ? e.key : null);
+    const act = map[e.key] ?? (/^[0-9.+*/()-]$/.test(e.key) ? e.key : null);
     if (!act || (act === 'enter' && e.target.matches?.('input[data-keypad]'))) return; // 数値欄自身の Enter は既存の処理に任せる
     e.preventDefault();
     press(act);

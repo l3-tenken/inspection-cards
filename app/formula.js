@@ -92,3 +92,19 @@ export function evaluate(formula, get) {
   if (missing || !Number.isFinite(v)) return null;
   return v;
 }
+
+/**
+ * 数値欄に打った式 (例: 12.5-10.2) を計算し、置き換える値 (文字列) を返す。
+ * 式でない (ただの数値・空)・計算できないときは null (入力をそのまま残す)
+ */
+export function calcInput(raw) {
+  const s = String(raw ?? '').normalize('NFKC').replace(/[,\s]/g, '');
+  if (!s || /^[-+]?(\d+\.?\d*|\.\d+)$/.test(s)) return null; // ただの数値は触らない (1.50 などの桁を保つ)
+  if (!/^[-+*/().\d]+$/.test(s)) return null; // 数字と演算子だけ (セル参照・関数は扱わない)
+  try {
+    const v = evaluate(s, () => null);
+    return v === null ? null : String(+v.toPrecision(12)); // 12.5-10.2 = 2.3000000000000007 のような誤差を落とす
+  } catch {
+    return null;
+  }
+}
