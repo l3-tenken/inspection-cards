@@ -31,8 +31,11 @@ const keypad = createKeypad({
   prevText: (card) => prevText(card),
 });
 
-function setHeader(title, actions = []) {
-  $('#title').textContent = title;
+function setHeader(title, actions = [], { home = false } = {}) {
+  // ホームだけ、題名をロゴの画像にして下に挿絵を敷く (body.home。入力の画面は装飾しない)
+  document.body.classList.toggle('home', home);
+  if (home) $('#title').replaceChildren(el('img', { class: 'logo', src: 'logo.webp', alt: title }));
+  else $('#title').textContent = title;
   $('#actions').replaceChildren(...actions);
 }
 
@@ -55,7 +58,7 @@ async function showHome() {
   // iPad ではボタンを押してもフォーカスが移らずテンキーが開いたままなので、S を空にした後に確定の処理が走って止まっていた
   if (S) { keypad.hide(); flushSave(); }
   S = null;
-  setHeader('点検カード');
+  setHeader('点検カード', [], { home: true });
   const [sessions, profiles] = await Promise.all([listSessions(), listProfiles()]);
   const fileInput = el('input', {
     type: 'file',

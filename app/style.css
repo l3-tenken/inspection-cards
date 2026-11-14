@@ -59,6 +59,15 @@ body {
   border-bottom: 1px solid var(--line);
 }
 .topbar h1 { font-size: 1.125rem; margin: 0; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ホームの題名はロゴの画像 (高さはボタンとほぼ同じにして、ヘッダーの高さを変えない) */
+.topbar h1 .logo { display: block; height: 3.25rem; width: auto; max-width: 100%; margin: -4px 0; object-fit: contain; object-position: left center; }
+/* ホームの挿絵: 画面の下に薄く敷く (透明度 80% = 利用者の指定)。カードや文字の後ろで、タップは通す */
+body.home::after {
+  content: ''; position: fixed; left: 0; right: 0; bottom: 0; z-index: -1; pointer-events: none;
+  height: min(66.67vw, 62vh); /* 縦向きは絵の全体 (3:2)、横向きは上側 (人物) を残して切る */
+  background: url(home-bg.webp) center top / cover no-repeat;
+  opacity: .2;
+}
 .net { font-size: 0.75rem; color: var(--warn); background: var(--warn-bg); border-radius: 99px; padding: 0 10px; }
 .net:empty { display: none; }
 .actions { display: flex; gap: 8px; }
