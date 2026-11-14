@@ -7,7 +7,7 @@ import {
 import {
   putSession, getSession, deleteSession, listSessions, requestPersist, putProfile, deleteProfile, listProfiles,
 } from './store.js';
-import { evaluate } from './formula.js';
+import { evaluate, calcInput } from './formula.js';
 import { $, el, add, toast } from './dom.js';
 import { createKeypad } from './keypad.js';
 import { initUpdateCheck } from './update.js';
@@ -422,10 +422,22 @@ function shownJudge(card) {
   return editingRow === card.row && j.state !== 'empty' ? { state: 'editing' } : j;
 }
 function beginEditing(row) { editingRow = row; }
+/** 数値欄に式 (例: 12.5-10.2) が入っていれば、計算した値に置き換える。暗算せずに差などを入力するため */
+function resolveExpression(row) {
+  const card = [...S.cards.meta, ...S.cards.items].find((c) => c.row === row);
+  if (!card || card.type !== 'number' || card.locked) return false;
+  const raw = String(S.session.values[row] ?? '');
+  const v = calcInput(raw);
+  if (v === null) return false;
+  setValue(card, v);
+  toast(`${raw.normalize('NFKC').replace(/\s/g, '')} = ${v}`, 'ok');
+  return true;
+}
 function endEditing() {
   if (editingRow === null) return;
   const row = editingRow;
   editingRow = null;
+  resolveExpression(row);
   recalcFormulas();
   main.querySelector(`.card[data-row="${row}"]`)?._refresh?.();
   updateProgress();
@@ -684,6 +696,8 @@ function jumpToFirstEmpty() {
 
 function showCards() {
   const { session, cards } = S;
+  // 式を打った途中でアプリを閉じていたら、ここで計算しておく
+  for (const c of cards.items) if (c.type === 'number' && !c.locked) { const v = calcInput(session.values[c.row]); if (v !== null) session.values[c.row] = v; }
   recalcFormulas();
   setHeader(session.fileName, [
     el('button', { class: 'btn ghost', onclick: () => { flushSave(); showHome(); } }, '一覧'),
