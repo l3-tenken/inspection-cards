@@ -444,10 +444,17 @@ function endEditing() {
   const row = editingRow;
   editingRow = null;
   if (!S) return; // 作業を開いていない (ホームに戻った後など)
+  // 判定の表示などで上のカードの高さが変わっても、入力中のカードの位置を保つ
+  const anchor = keypad.isOpen() ? keypad.target?.closest('.card') : null;
+  const before = anchor?.getBoundingClientRect().top;
   resolveExpression(row);
   recalcFormulas();
   main.querySelector(`.card[data-row="${row}"]`)?._refresh?.();
   updateProgress();
+  if (anchor) {
+    const d = anchor.getBoundingClientRect().top - before;
+    if (Math.abs(d) > 1) window.scrollBy(0, d);
+  }
 }
 
 function updateProgress() {
@@ -460,6 +467,10 @@ function updateProgress() {
 }
 
 function applyFilter() {
+  // 表示の切り替えでカードの高さや並びが変わっても、入力中のカードが画面の同じ位置に残るようにする
+  // (iPad の Safari はスクロール位置の自動補正をしないため、上のカードが消えると入力中のカードが大きくずれる)
+  const anchor = keypad.isOpen() ? keypad.target?.closest('.card') : null;
+  const before = anchor?.getBoundingClientRect().top;
   for (const node of main.querySelectorAll('.card[data-row]')) {
     const card = node._card;
     node._refresh?.();
@@ -471,6 +482,11 @@ function applyFilter() {
   for (const node of main.querySelectorAll('.card.cond')) node.hidden = S.filter !== 'all';
   for (const sec of main.querySelectorAll('.section')) {
     sec.hidden = ![...sec.querySelectorAll('.card')].some((c) => !c.hidden);
+  }
+  if (anchor && !anchor.hidden) {
+    const d = anchor.getBoundingClientRect().top - before;
+    if (Math.abs(d) > 1) window.scrollBy(0, d);
+    keypad.reveal();
   }
 }
 
@@ -677,9 +693,10 @@ function focusNext(card, { scroll = true, back = false } = {}) {
   const inp = next.querySelector('input');
   if (inp) activateInput(inp);
   else { document.activeElement?.blur?.(); keypad.hide(); } // 選択式はキーボードを閉じてボタンで選ぶ
-  // テンキー使用中はスクロールを一瞬で済ませる (スクロール中のタップは iPad で効かないため)
-  if (scroll || !inp) next.scrollIntoView({ block: 'center', behavior: keypad.isOpen() ? 'auto' : 'smooth' });
-  if (keypad.isOpen()) keypad.reveal();
+  // テンキー使用中はスクロールを一瞬で済ませ (スクロール中のタップは iPad で効かないため)、
+  // 画面の中央ではなくツールバーとテンキーの間の中ほどに置く (中央だとテンキーの裏に入ることがある)
+  if (keypad.isOpen()) keypad.reveal({ center: scroll });
+  else if (scroll || !inp) next.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
 /** 入力欄を入力中にする。数値欄はフォーカスせずテンキーの対象にする */
@@ -695,10 +712,10 @@ function activateInput(inp) {
 function jumpToFirstEmpty() {
   const node = [...main.querySelectorAll('.card[data-row]')].find((n) => !n.hidden && isEmptyRequired(n._card));
   if (!node) { toast('未入力の項目はありません', 'ok'); return; }
-  node.scrollIntoView({ block: 'center', behavior: keypad.isOpen() ? 'auto' : 'smooth' });
   const inp = node.querySelector('input');
   if (inp) activateInput(inp);
-  if (keypad.isOpen()) keypad.reveal();
+  if (keypad.isOpen()) keypad.reveal({ center: true });
+  else node.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
 function showCards() {
@@ -903,8 +920,8 @@ $('#size').addEventListener('click', () => {
   // 拡大後も、入力中のカードが画面内に残るようにする (数値欄はフォーカスしないのでテンキーの対象も見る)
   const focused = (keypad.target || document.activeElement)?.closest?.('.card');
   applyTextSize(key);
-  focused?.scrollIntoView({ block: 'center' });
-  if (keypad.isOpen()) keypad.reveal();
+  if (keypad.isOpen()) keypad.reveal({ center: true });
+  else focused?.scrollIntoView({ block: 'center' });
   toast(`文字サイズ: ${label}`);
 });
 
