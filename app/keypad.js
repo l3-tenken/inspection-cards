@@ -148,13 +148,20 @@ export function createKeypad(hooks) {
   dragGrip(wGrip, 'w');
   loadSize();
 
-  /** 入力中の項目がテンキーに隠れていれば、見える位置まで一瞬でずらす */
-  function reveal() {
+  /**
+   * 入力中の項目を、ツールバーとテンキーの間の見える範囲に一瞬でずらす。
+   * center: 見える範囲の中ほどに置く (項目を移ったとき)。省略時は隠れているときだけ最小限ずらす。
+   * 画面全体の中央 (scrollIntoView の center) に置くと、テンキーの裏に入ることがあるので使わない
+   */
+  function reveal({ center = false } = {}) {
     if (!target) return;
     const r = (target.closest('.card') || target).getBoundingClientRect();
     const limit = window.innerHeight - panel.offsetHeight - 12;
     const top = (document.querySelector('.toolbar')?.getBoundingClientRect().bottom ?? 0) + 8;
-    if (r.bottom > limit) window.scrollBy(0, r.bottom - limit);
+    if (center && r.height < limit - top) {
+      const d = (r.top + r.bottom) / 2 - (top + limit) / 2;
+      if (Math.abs(d) > 1) window.scrollBy(0, d);
+    } else if (r.bottom > limit) window.scrollBy(0, r.bottom - limit);
     else if (r.top < top) window.scrollBy(0, r.top - top);
   }
   function show(input) {
@@ -211,12 +218,16 @@ export function createKeypad(hooks) {
     e.preventDefault();
     press(act);
   });
-  // 回転などで高さが変わったら、入力中の項目を見える位置に戻す
+  // 回転などで大きさが変わったら、入力中の項目を見える位置に戻す。
+  // 回転 (横幅が変わる) 以外のサイズ変化 (Safari のツールバーの出入りなど) では、隠れたときだけ最小限ずらす
+  let lastWidth = window.innerWidth;
   window.addEventListener('resize', () => {
     loadSize(); // 縦向き・横向きで別々に記憶している
+    const rotated = window.innerWidth !== lastWidth;
+    lastWidth = window.innerWidth;
     if (panel.hidden) return;
     applyKeypadSize();
-    target?.closest('.card')?.scrollIntoView({ block: 'center' });
+    reveal({ center: rotated });
   });
   return { show, hide, reveal, isOpen: () => !panel.hidden, get target() { return target; } };
 }
