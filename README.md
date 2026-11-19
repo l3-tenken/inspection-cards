@@ -79,7 +79,7 @@ py dev/serve.py 8765
 
 ## iPad での使い方
 
-Service Worker は HTTPS でないと動かないため、`app/` を GitHub Pages で公開している。
+Service Worker は HTTPS でないと動かないため、`app/` を GitHub Pages で公開している (https://l3-tenken.github.io/inspection-cards/)。
 `main` に push すると `.github/workflows/pages.yml` が `app/` だけを公開する (xlsx は `.gitignore` で除外)。
 **アプリを更新したら `app/sw.js` の `VERSION` を上げてから push する** (上げないと iPad に古い版が残る)。
 アプリは開いたとき・ホーム画面から戻ったときに (オンラインなら) 新しい版を確認し、ホーム下部に「アプリの版」を表示する。
