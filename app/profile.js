@@ -95,9 +95,51 @@ export function buildProfileCards(sheet, profile, targetCol) {
     if (hasAny) rows.push(r);
   }
 
-  // 記録列: startCol 以降で何か入っている列 (「-」だけのセルは空とみなす)
+  // 行を特定するキー (設定の items.keyCol の値) → 行。同じキーの行や、キーが空の行もある (項目名で区別する)
+  const byKey = new Map();
+  for (const r of rows) {
+    const k = norm(text(sheet.get(r, keyCol)));
+    byKey.set(k, [...(byKey.get(k) || []), r]);
+  }
+  // 行ごとの項目名と補足 (名前が空の行は直前の項目の続き。全角スペースの連続は 1 つにまとめる)
+  const rowLabel = new Map();
+  {
+    let last = '';
+    for (const r of rows) {
+      const name = text(at(r, 'name')).replace(/[\s　]+/g, ' ') || last;
+      last = name;
+      rowLabel.set(r, { name, label: name || `${r}行目`, sub: text(at(r, 'sub')) });
+    }
+  }
+
+  // 設定の「行の指定」を解決する ({no, name} → 行)。名前が違えば警告して使わない
+  // 設定に控えてある行番号 (_row) と実際の行が違う = 行が増減した。キーと項目名が合えば使うが、
+  // 行番号で書いた式 (formula) などがずれるおそれがあるので知らせる
+  const moved = new Map();
+  const nameOk = (row, name) => {
+    const l = rowLabel.get(row);
+    return !name || norm(l.label + l.sub).includes(norm(name)) || norm(l.label) === norm(name);
+  };
+  const findRow = (ref, what) => {
+    const rs = byKey.get(norm(ref.no ?? ''));
+    if (!rs) { warnings.push(`${what}: キー ${ref.no} の行が見つかりません`); return null; }
+    // 同じキーの行が複数あるときは、項目名が合う行 → 控えの行番号 (_row) が合う行の順に選ぶ
+    const named = rs.filter((r) => nameOk(r, ref.name));
+    const pick = named.find((r) => r === ref._row) ?? named[0] ?? rs[0];
+    if (ref.name && !nameOk(pick, ref.name)) {
+      warnings.push(`${what}: キー ${ref.no} の項目名が「${ref.name}」ではありません (実際: 「${rowLabel.get(pick).label}」)`);
+      return null;
+    }
+    if (Number.isInteger(ref._row) && ref._row !== pick) moved.set(pick, `キー ${ref.no} ${ref.name || ''}: ${ref._row} → ${pick} 行目`);
+    return pick;
+  };
+
+  // 前もって先の列まで値 (式・「-」など) を入れてある行。書き込む列を探すときは、この行の値を記録とみなさない
+  const presetRows = new Set((profile.presetRows || []).map((ref) => findRow(ref, '前もって値を入れてある行')).filter(Boolean));
+
+  // 記録列: startCol 以降で何か入っている列 (「-」だけのセル・presetRows の行は空とみなす)
   const recStart = colNum(profile.records.startCol);
-  const recRows = [...metaRows.map((m) => m.row), ...rows];
+  const recRows = [...metaRows.map((m) => m.row), ...rows.filter((r) => !presetRows.has(r))];
   const recordCols = [];
   for (let c = recStart; c <= Math.max(sheet.maxC, recStart); c++) {
     if (recRows.some((r) => isRecorded(sheet.get(r, c)))) recordCols.push(c);
@@ -114,22 +156,12 @@ export function buildProfileCards(sheet, profile, targetCol) {
     ...base(m.row), kind: 'meta', label: m.label.replace(/[:：]\s*$/, ''), type: m.type, chips: [],
   }));
 
-  // 行を特定するキー (設定の items.keyCol の値) → 行。同じキーの行や、キーが空の行もある (項目名で区別する)
-  const byKey = new Map();
-  for (const r of rows) {
-    const k = norm(text(sheet.get(r, keyCol)));
-    byKey.set(k, [...(byKey.get(k) || []), r]);
-  }
   let lastSection = '';
-  let lastName = '';
   const kinds = profile.kinds || {};
   const items = rows.map((r) => {
     const section = text(at(r, 'section')) || lastSection;
     lastSection = section;
-    // 名前が空の行は直前の項目の続き。全角スペースの連続は 1 つにまとめる
-    const name = text(at(r, 'name')).replace(/[\s　]+/g, ' ') || lastName;
-    lastName = name;
-    const sub = text(at(r, 'sub'));
+    const { name, sub } = rowLabel.get(r);
     const setText = text(at(r, 'set'));
     const kindText = text(at(r, 'kind'));
     let rangeKind = null;
@@ -201,25 +233,10 @@ export function buildProfileCards(sheet, profile, targetCol) {
     };
   });
 
-  // 設定の「行の指定」を解決する ({no, name} → 行)。名前が違えば警告して使わない
   const itemByRow = new Map(items.map((c) => [c.row, c]));
-  // 設定に控えてある行番号 (_row) と実際の行が違う = 行が増減した。キーと項目名が合えば使うが、
-  // 行番号で書いた式 (formula) などがずれるおそれがあるので知らせる
-  const moved = new Map();
-  const nameOk = (card, name) => !name || norm(card.label + card.sub).includes(norm(name)) || norm(card.label) === norm(name);
   const resolve = (ref, what) => {
-    const rs = byKey.get(norm(ref.no ?? ''));
-    if (!rs) { warnings.push(`${what}: キー ${ref.no} の行が見つかりません`); return null; }
-    // 同じキーの行が複数あるときは、項目名が合う行 → 控えの行番号 (_row) が合う行の順に選ぶ
-    const named = rs.filter((r) => itemByRow.get(r) && nameOk(itemByRow.get(r), ref.name));
-    const pick = named.find((r) => r === ref._row) ?? named[0] ?? rs[0];
-    const card = itemByRow.get(pick);
-    if (ref.name && card && !nameOk(card, ref.name)) {
-      warnings.push(`${what}: キー ${ref.no} の項目名が「${ref.name}」ではありません (実際: 「${card.label}」)`);
-      return null;
-    }
-    if (card && Number.isInteger(ref._row) && ref._row !== card.row) moved.set(card.row, `キー ${ref.no} ${ref.name || ''}: ${ref._row} → ${card.row} 行目`);
-    return card;
+    const r = findRow(ref, what);
+    return r ? itemByRow.get(r) : null;
   };
 
   // 入力方法の指定 (自動判定より優先)。options があれば選択式。"A|B" の文字列でも配列でもよい
@@ -253,7 +270,14 @@ export function buildProfileCards(sheet, profile, targetCol) {
   // 式は設定の formula ({col} が今回の列) か、前回までの記録で最後に式が入っている列からずらして作る
   for (const ref of profile.formulaRows || []) {
     const c = resolve(ref, '自動計算の行');
-    if (!c || c.locked) continue;
+    if (!c) continue;
+    if (c.locked) {
+      // 今回の列に前もって式が入っている: 式はそのまま残し、計算した値だけを書き込む
+      // (書き込んだだけでは Excel が計算し直さず、前の値 (「#DIV/0!」など) のまま表示されるため)
+      const cur = sheet.get(c.row, targetCol);
+      if (cur?.formula) Object.assign(c, { type: 'formula', formula: cur.formula.replace(/^=/, ''), locked: false, keepFormula: true });
+      continue;
+    }
     let f = ref.formula ? ref.formula.replace(/^=/, '').replaceAll('{col}', colName(targetCol)) : '';
     if (!f) {
       const src = [...prevCols].reverse().find((col) => sheet.get(c.row, col)?.formula);

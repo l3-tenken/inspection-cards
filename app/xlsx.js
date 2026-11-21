@@ -454,6 +454,23 @@ function cellXml(p, ref, style, val) {
   return `<${p}c r="${ref}"${s} t="inlineStr"><${p}is><${p}t${sp}>${escXml(val.v)}</${p}t></${p}is></${p}c>`;
 }
 
+/**
+ * 式のあるセル (<c>…</c>) の計算済みの値 <v> を数値 v に置き換える。式がないセルは null (触らない)。
+ * 値の種類 (t="e" のエラー・t="str" の文字など) は数値に合わせて外す
+ */
+function replaceCachedValue(p, cx, v) {
+  if (!Number.isFinite(v) || !cx.endsWith(`</${p}c>`)) return null;
+  const openEnd = cx.indexOf('>') + 1;
+  const open = cx.slice(0, openEnd).replace(/\st="[^"]*"/, '');
+  let inner = cx.slice(openEnd, cx.length - `</${p}c>`.length);
+  const fm = new RegExp(`<${p}f(\\s[^>]*)?(/>|>[\\s\\S]*?</${p}f>)`).exec(inner);
+  if (!fm) return null;
+  inner = inner.replace(new RegExp(`<${p}v\\s*/>|<${p}v>[\\s\\S]*?</${p}v>`), '');
+  const fEnd = inner.indexOf(fm[0]) + fm[0].length;
+  inner = inner.slice(0, fEnd) + `<${p}v>${v}</${p}v>` + inner.slice(fEnd);
+  return open + inner + `</${p}c>`;
+}
+
 /** 開始タグ位置 start から要素の終端 (排他) を返す。要素は同名でネストしない前提 */
 function elementEnd(xml, start, closeTag) {
   const gt = xml.indexOf('>', start);
@@ -534,6 +551,14 @@ export function patchSheetXml(xml, updates) {
     for (const u of [...ups].sort((a, b) => b.col - a.col)) {
       const ref = colName(u.col) + r;
       const ex = cells.find((x) => x.c === u.col);
+      if (u.val.kind === 'cached') {
+        // 式のあるセルの計算済みの値だけを差し替える (式・書式はそのまま)
+        const nx = ex && replaceCachedValue(p, ex.xml, u.val.v);
+        if (!nx) continue;
+        out = out.slice(0, ex.start) + nx + out.slice(ex.end);
+        written.push(ref);
+        continue;
+      }
       if (ex) {
         if (new RegExp(`<${p}(v|f|is)[\\s>]`).test(ex.xml)) continue; // 空でないセルは上書きしない
         const st = /\ss="(\d+)"/.exec(ex.xml.slice(0, ex.xml.indexOf('>')));
@@ -574,6 +599,11 @@ export async function exportWorkbook(wb, sheet, targetCol, cardList, values) {
       // 自動計算の行: 式を書く (値は計算できたときだけ添える)
       if (!card.formula) continue;
       const v = toCellValue('number', values[card.row]);
+      if (card.keepFormula) {
+        // 前もって入っている式は残し、計算済みの値だけを差し替える (計算できないときは触らない)
+        if (v?.kind === 'n') updates.push({ row: card.row, col: targetCol, style: card.style, val: { kind: 'cached', v: v.v } });
+        continue;
+      }
       updates.push({ row: card.row, col: targetCol, style: card.style, val: { kind: 'f', f: card.formula, v: v?.kind === 'n' ? v.v : null } });
       continue;
     }
