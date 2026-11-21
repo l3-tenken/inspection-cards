@@ -7,11 +7,21 @@
 !/.github/
 !/app/
 !/dev/
+!/docs/
+!/AGENTS.md
+!/.claude/
+
+# .claude はスキルだけ (個人の設定 settings.local.json などは入れない)
+.claude/*
+!.claude/skills/
 
 dev/*
 !dev/serve.py
 !dev/verify.py
 !dev/make_icons.py
+!dev/check_profile.py
+!dev/check_app.js
+!dev/e2e.js
 
 # 点検表 (実データ・ダミーとも) はどこにあっても入れない
 *.xlsx
