@@ -155,6 +155,10 @@ iPad の Safari から Excel の点検表 (.xlsx / .xlsm) を読み込み、設�
 
 - 作業を始める前に `main` を取り込んで最新から始める
 - 作業が終わったら、ブランチを push → PR を作成 → `main` にマージするところまで行う (`main` へのマージで GitHub Pages に公開される)
+- マージした後は、GitHub Actions の「Deploy to GitHub Pages」が成功したかを確かめる。
+  `deploy-pages` が「No artifacts named "github-pages" were found」で失敗することがある (GitHub 側の一時的な不具合。2026-11 に 2 回。
+  アップロードは成功しているのに見つけられない)。そのときは公開されず、iPad が新しい版にならない (利用者が「更新されない」と気づいた)。
+  同じ run の再実行でも失敗したので、`workflow_dispatch` で新しく走らせ直す (それで成功した)
 - 決まったこと・経緯は会話に残すだけにせず、この CLAUDE.md に追記する (次のセッションが知る手段はこのファイルだけ)
 - 動作の確認はダミーの点検表を作って行う (コミットしない)
 - 設定ファイルの作成・直しは、どの AI (Claude Code・ChatGPT・Copilot) に頼んでも同じ仕事になるよう、手順を `docs/設定ファイルの作り方.md` に
