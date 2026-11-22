@@ -69,7 +69,7 @@ async function showHome() {
     el('section', { class: 'home' },
       el('button', { class: 'btn primary big', onclick: () => fileInput.click() }, '📂 点検表 (Excel) を開く'),
       fileInput,
-      el('p', { class: 'hint' }, '開いた点検表と入力内容はこの端末内に保存されます。Wi-Fi が無くても入力・書き出しできます。'),
+      el('p', { class: 'hint' }, '開いた点検表と入力内容はこの端末内に保存されます。Wi-Fi が無くても入力できます。書き出したファイルを共有フォルダなどに保存するときは、Wi-Fi のある場所で行ってください。'),
       sessions.length ? el('h2', {}, '作業中の点検表') : null,
       el('div', { class: 'session-list' },
         sessions.map((s) => {
