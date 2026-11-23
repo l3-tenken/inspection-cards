@@ -29,6 +29,7 @@ iPad の Safari から Excel の点検表 (.xlsx / .xlsm) を読み込み、設�
 | `dev/check_profile.py` | 設定ファイルの確認 (標準ライブラリだけ。`app/profile.js` と同じ規則でカードと警告を出す。ChatGPT・Copilot でも実行できる) |
 | `dev/e2e.js` / `dev/check_app.js` | 画面で読み込み → 入力 → 書き出し / アプリと check_profile.py の一致の確認 (Playwright) |
 | `docs/設定ファイルの作り方.md` | 設定ファイルの頼み方 (利用者向け) と AI の手順。`AGENTS.md` (他の AI 向け) と `.claude/skills/inspection-profile` はこれを指す |
+| `docs/Copilotエージェントの作り方.md` | 職場の Microsoft 365 Copilot に設定ファイル作成用のエージェントを作る手順と、そのまま貼る指示 (案内 → 確認と質問 → 作成)。規則は手順書を知識として読ませ、指示には会話の進め方だけを書く |
 | `.github/workflows/pages.yml` | `main` への push で `app/` だけを GitHub Pages に公開 |
 
 ## 守ること
