@@ -71,6 +71,41 @@ html[data-theme="apricot"] .key.next { background: linear-gradient(180deg, #ff9a
 html[data-theme="apricot"] .key.close { background: transparent; box-shadow: none; }
 html[data-theme="apricot"] .key:active { box-shadow: inset 0 1px 3px rgb(160 90 40 / .25); }
 
+/* 紺と薄黄 (利用者の指定): 薄黄色の地に紺のボタン。テンキーのパネルは紺、キーとボタン類は薄黄色 */
+html[data-theme="navy"] {
+  --bg: #fdf8e1;
+  --surface: #fffdf3;
+  --text: #1c2a4a;
+  --muted: #6a7090;
+  --line: #ece3b8;
+  --primary: #1f3a6e;
+  --primary-text: #fff8d6;
+  --ok: #15805a;
+  --ok-bg: #e1f3ea;
+  --ng: #d63a4a;
+  --ng-bg: #fde5e7;
+  --warn: #8a5a00;
+  --warn-bg: #fff0c8;
+  --chip: #f7efc8;
+  --radius: 16px;
+  color-scheme: light;
+}
+html[data-theme="navy"] .card:not(.compact) { border-color: transparent; box-shadow: 0 2px 10px rgb(30 50 100 / .10); }
+html[data-theme="navy"] .card:not(.compact)[data-state="ok"] { border-color: var(--ok); }
+html[data-theme="navy"] .card:not(.compact)[data-state="ng"] { border-color: var(--ng); }
+html[data-theme="navy"] .card:not(.compact)[data-state="warn"] { border-color: var(--warn); }
+html[data-theme="navy"] .card.cond { border-color: var(--primary); }
+/* パネルの中だけ文字・つまみを明るい色に (--muted・--line はパネル内で差し替え) */
+html[data-theme="navy"] .keypad { background: #1f3a6e; border-top-color: #1f3a6e; color: #fff8d6; --text: #fff8d6; --muted: #c3cbe3; --line: #4a6396; }
+html[data-theme="navy"] .key {
+  color: #1c2a4a; border-color: #e9dca0;
+  background: linear-gradient(180deg, #fffdf0 0%, #f6e9b4 100%);
+  box-shadow: inset 0 1px 0 #ffffff, 0 2px 4px rgb(0 0 0 / .30);
+}
+html[data-theme="navy"] .key.fn, html[data-theme="navy"] .key.nav, html[data-theme="navy"] .key.close { background: linear-gradient(180deg, #faf0c4 0%, #ecdb92 100%); }
+html[data-theme="navy"] .key.next { background: linear-gradient(180deg, #ffe680 0%, #f0c43c 100%); border-color: #f0c43c; color: #1c2a4a; }
+html[data-theme="navy"] .key:active { box-shadow: inset 0 1px 3px rgb(0 0 0 / .30); }
+
 * { box-sizing: border-box; }
 /* 文字サイズ: すべての文字・入力欄・カード幅が rem 基準なので、ここだけで全体が拡大する */
 html { -webkit-text-size-adjust: 100%; font-size: 16px; }
