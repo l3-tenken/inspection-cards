@@ -157,9 +157,13 @@ iPad の Safari から Excel の点検表 (.xlsx / .xlsm) を読み込み、設�
 - 作業を始める前に `main` を取り込んで最新から始める
 - 作業が終わったら、ブランチを push → PR を作成 → `main` にマージするところまで行う (`main` へのマージで GitHub Pages に公開される)
 - マージした後は、GitHub Actions の「Deploy to GitHub Pages」が成功したかを確かめる。
-  `deploy-pages` が「No artifacts named "github-pages" were found」で失敗することがある (GitHub 側の一時的な不具合。2026-11 に 2 回。
-  アップロードは成功しているのに見つけられない)。そのときは公開されず、iPad が新しい版にならない (利用者が「更新されない」と気づいた)。
-  同じ run の再実行でも失敗したので、`workflow_dispatch` で新しく走らせ直す (それで成功した)
+  `deploy-pages` が「No artifacts named "github-pages" were found」で失敗することがある (アップロードは成功し、預けたファイルも残っているのに見つけられない)。
+  そのときは公開されず、iPad が新しい版にならない (利用者が「更新されない」と気づいた)。2026-11 に増え、11-24 は 4 回続けて失敗した
+  (直近 16 回中 7 回)。原因は確定していない: 預けた直後 (同じ秒) に探しに行くので、GitHub の中で見えるようになる前に探していると推測
+  (2FA など認証の問題ではない: 認証なら 401/403 になり、同じ鍵のアップロードは成功している)。
+  対策 (2026-11-24): `pages.yml` を build (預ける) と deploy (公開) の 2 つのジョブに分け、公開に失敗したら 30 秒・90 秒待って計 3 回まで試す。
+  あわせて公式の部品を新しい版にした (checkout v7・configure-pages v6・upload-pages-artifact v5・deploy-pages v5。Node 20 の警告が出ていた)。
+  それでも失敗したら `workflow_dispatch` で新しく走らせ直す (同じ run の再実行では失敗した)。再発が続くなら、この経緯を見直す
 - 決まったこと・経緯は会話に残すだけにせず、この CLAUDE.md に追記する (次のセッションが知る手段はこのファイルだけ)
 - 動作の確認はダミーの点検表を作って行う (コミットしない)
 - 設定ファイルの作成・直しは、どの AI (Claude Code・ChatGPT・Copilot) に頼んでも同じ仕事になるよう、手順を `docs/設定ファイルの作り方.md` に
