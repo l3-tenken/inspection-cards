@@ -928,7 +928,7 @@ $('#size').addEventListener('click', () => {
 });
 
 // ---------------- 外観 (気分で切り替える配色。端末に記憶) ----------------
-const THEMES = [['', '標準'], ['apricot', 'アプリコット']];
+const THEMES = [['', '標準'], ['apricot', 'アプリコット'], ['navy', '紺と薄黄']];
 function applyTheme(key) {
   if (key) document.documentElement.dataset.theme = key;
   else delete document.documentElement.dataset.theme;
