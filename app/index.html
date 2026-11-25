@@ -17,7 +17,13 @@
 <script>
   // 文字サイズ・外観は描画前に反映 (ちらつき防止)
   try { const s = localStorage.getItem('textSize'); if (s) document.documentElement.dataset.size = s; } catch {}
-  try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
+  // 外観。カスタム (custom-N) は保存しておいた CSS 変数を html に入れる (theme.js の themeVars と同じもの)
+  try {
+    const t = localStorage.getItem('theme'), h = document.documentElement, m = /^custom-(\d)$/.exec(t || '');
+    const c = m && JSON.parse(localStorage.getItem('customThemes') || '[]')[m[1]];
+    if (t && (!m || c)) h.dataset.theme = t;
+    if (c) for (const [k, v] of Object.entries(c.vars)) h.style.setProperty(k, v);
+  } catch {}
 </script>
 </head>
 <body>

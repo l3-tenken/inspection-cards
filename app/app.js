@@ -11,6 +11,7 @@ import { evaluate, calcInput } from './formula.js';
 import { $, el, add, toast } from './dom.js';
 import { createKeypad } from './keypad.js';
 import { initUpdateCheck } from './update.js';
+import { themePicker, showCustomize } from './theme.js';
 
 const main = $('#main');
 const mount = (...children) => { keypad.hide(); main.replaceChildren(); add(main, children); };
@@ -110,7 +111,7 @@ async function showHome() {
           }, '削除')))),
       profileImportButton(() => showHome()),
       el('h2', {}, '外観'),
-      themePicker(),
+      themePicker(() => showCustomize({ mount, setHeader, toast, onDone: showHome })),
       versionLine,
     ),
   );
@@ -926,25 +927,6 @@ $('#size').addEventListener('click', () => {
   else focused?.scrollIntoView({ block: 'center' });
   toast(`文字サイズ: ${label}`);
 });
-
-// ---------------- 外観 (気分で切り替える配色。端末に記憶) ----------------
-const THEMES = [['', '標準'], ['apricot', 'アプリコット'], ['navy', '紺と薄黄']];
-function applyTheme(key) {
-  if (key) document.documentElement.dataset.theme = key;
-  else delete document.documentElement.dataset.theme;
-  try { localStorage.setItem('theme', key); } catch {}
-}
-function themePicker() {
-  const cur = document.documentElement.dataset.theme || '';
-  const btns = THEMES.map(([k, label]) => el('button', {
-    class: `seg${k === cur ? ' on' : ''}`,
-    onclick: () => {
-      applyTheme(k);
-      btns.forEach((b, i) => b.classList.toggle('on', THEMES[i][0] === k));
-    },
-  }, label));
-  return el('div', { class: 'theme-row' }, el('div', { class: 'segs' }, btns));
-}
 
 // ヘッダーの高さ (文字サイズ・回転で変わる) に合わせて、ツールバーの固定位置をずらす
 function updateTopbarH() {
