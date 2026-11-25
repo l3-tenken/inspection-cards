@@ -106,6 +106,20 @@ html[data-theme="navy"] .key.fn, html[data-theme="navy"] .key.nav, html[data-the
 html[data-theme="navy"] .key.next { background: linear-gradient(180deg, #ffe680 0%, #f0c43c 100%); border-color: #f0c43c; color: #1c2a4a; }
 html[data-theme="navy"] .key:active { box-shadow: inset 0 1px 3px rgb(0 0 0 / .30); }
 
+/* カスタム外観 (theme.js。色などは html の style に入れた変数) */
+html[data-theme^="custom"] .card:not(.compact) { border-color: var(--c-card-border); box-shadow: var(--c-card-shadow); }
+html[data-theme^="custom"] .card:not(.compact)[data-state="ok"] { border-color: var(--ok); }
+html[data-theme^="custom"] .card:not(.compact)[data-state="ng"] { border-color: var(--ng); }
+html[data-theme^="custom"] .card:not(.compact)[data-state="warn"] { border-color: var(--warn); }
+html[data-theme^="custom"] .card.cond { border-color: var(--primary); }
+html[data-theme^="custom"] .keypad {
+  background: var(--c-kp-bg); border-top-color: var(--c-kp-line); color: var(--c-kp-text);
+  --text: var(--c-kp-text); --muted: var(--c-kp-muted); --line: var(--c-kp-line);
+}
+html[data-theme^="custom"] .key { color: var(--c-key-text); background: var(--c-key-bg); border-color: var(--c-key-border); box-shadow: var(--c-key-shadow); }
+html[data-theme^="custom"] .key.fn, html[data-theme^="custom"] .key.nav, html[data-theme^="custom"] .key.close { background: var(--c-keyfn-bg); }
+html[data-theme^="custom"] .key.next { background: var(--c-next-bg); color: var(--c-next-text); border-color: var(--c-next-border); }
+
 * { box-sizing: border-box; }
 /* 文字サイズ: すべての文字・入力欄・カード幅が rem 基準なので、ここだけで全体が拡大する */
 html { -webkit-text-size-adjust: 100%; font-size: 16px; }
@@ -371,6 +385,37 @@ html.keypad-open .toast { bottom: calc(var(--keypad-h, 0px) + 12px); } /* 通知
 
 /* 版の表示と、新しい版を読み込んだときの案内 */
 .theme-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.theme-row .segs, .segs.cz-wrap { flex-wrap: wrap; }
+/* 外観のカスタマイズ: 見本 (カード・テンキー) を見ながら設定を変える。広い画面は左右に並べ、見本は止めておく */
+.cz { display: grid; gap: 16px; padding-top: 8px; }
+.cz > * { min-width: 0; }
+.cz-preview {
+  position: sticky; top: calc(var(--topbar-h, 65px) + 8px); z-index: 5; align-self: start;
+  display: grid; gap: 10px; padding: 10px; background: var(--bg); border: 1px dashed var(--line); border-radius: var(--radius);
+  max-height: 46vh; overflow: auto;
+}
+@media (min-width: 700px) {
+  .cz { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  .cz-preview { max-height: calc(100vh - var(--topbar-h, 65px) - 24px); }
+}
+.cz-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cz-bar .segs { margin-right: auto; }
+.cz-cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+.cz-cards .field.big { min-height: 3rem; font-size: 1.25rem; }
+@media (max-width: 600px) { .cz-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.keypad.keypad-preview { position: static; z-index: auto; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: none; }
+.keypad-preview .keypad-keys { width: min(100%, 15rem); gap: 5px; }
+.keypad-preview .key { min-height: 2.5rem; font-size: 1.125rem; display: grid; place-items: center; }
+.keypad-preview .key.nav { min-height: 2.5rem; font-size: 1rem; }
+.keypad-preview .key.close { min-height: 2.25rem; padding: 0 12px; font-size: 0.875rem; }
+.cz-controls { display: grid; gap: 14px; align-content: start; }
+.cz-group { display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; }
+.cz-group h2 { font-size: 0.9375rem; color: var(--muted); margin: 0; }
+.cz-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 2.75rem; border-top: 1px solid var(--line); padding-top: 6px; }
+.cz-color { width: 3.5rem; height: 2.25rem; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: none; }
+.cz-range { width: 45%; accent-color: var(--primary); }
+.cz-check { width: 1.5rem; height: 1.5rem; accent-color: var(--primary); }
+.cz-actions { display: flex; gap: 8px; justify-content: space-between; }
 .version-line { margin-top: 24px; font-size: 0.8125rem; }
 .update-banner {
   position: fixed; left: 50%; top: calc(var(--topbar-h, 65px) + 8px); transform: translateX(-50%); z-index: 55;

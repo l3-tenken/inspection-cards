@@ -17,6 +17,7 @@ iPad の Safari から Excel の点検表 (.xlsx / .xlsm) を読み込み、設�
 | `app/app.js` | 画面 (ホーム / 列選択 / カード入力 / 書き出し)・判定・保存・自動計算の呼び出し |
 | `app/dom.js` | 画面部品のヘルパー (`$` / `el()` / `add` / `toast`) |
 | `app/keypad.js` | アプリ内テンキー (`createKeypad(hooks)`)。確定・移動などは app.js から hooks で受け取る |
+| `app/theme.js` | 外観の切り替え (`applyTheme` / `themePicker`) と、見本を見ながら作るカスタム外観 (`showCustomize`。3 件保存) |
 | `app/update.js` | 最新版の確認とホームの「アプリの版」表示 (`initUpdateCheck`) |
 | `app/formula.js` | 自動計算の行の簡易計算 (`evaluate`。eval を使わない) |
 | `app/xlsx.js` | シート解析 (`loadSheet`、コメント・共有数式も)、カードの共通部分 (`baseCard`)、設定なしのレイアウト推定 (`detectLayout` / `buildCards`)、セル XML の差し替え (`patchSheetXml` / `exportWorkbook`) |
@@ -132,6 +133,12 @@ iPad の Safari から Excel の点検表 (.xlsx / .xlsm) を読み込み、設�
   (足すときは `THEMES` と `style.css` に追加)。入力済の緑・範囲外の赤・注意の黄土色は、どの配色でも意味が変わらない色にする
   「紺と薄黄」(v46。利用者の指定): 薄黄色の地に紺のボタン、カードは影。テンキーのパネルは紺で、キー・戻る/進む・閉じるは薄黄色のグラデーション、
   Enter だけ濃い黄色で目立たせる。パネル内の文字・前回値・つまみは `.keypad` の中で `--text` / `--muted` / `--line` を差し替えて明るくする
+- 外観のカスタマイズ (v47。利用者の指定:「iPad 上で見ながらカスタマイズ、名前を付けて 3 件保存」)。`app/theme.js` (外観の切り替えもここ)。
+  ホームの「外観」の「🎨 カスタマイズ」で開き、見本 (カード: 入力済・入力中・範囲外・選択式、押しても動かないテンキー) を見ながら
+  色 (`input type="color"`)・角の丸み・カードの影・枠線・キーの立体感を変える。変えた内容は画面全体にすぐ反映 (`data-theme="custom-edit"`)、
+  保存せずに「戻る」と元の外観に戻す。保存先は 3 つ (localStorage `customThemes` = `[{ name, settings, vars }]`、選択は `theme` = `custom-N`)。
+  `vars` は計算済みの CSS 変数で、`index.html` が描画前に html の style へ入れる (計算は `themeVars` だけに書く)。
+  入力済の緑・範囲外の赤・注意の黄土色は変えられない (カードの地の明るさで明るめ/暗めを選ぶ)。「元にする外観」に用意した外観の値 (`PRESETS`) がある
 - 「担当」は日本語入力 (画面キーボード)、選択式はボタン、日付・時間は標準の入力欄のまま
 - ホームの案内は「Wi-Fi が無くても入力できます。書き出したファイルを共有フォルダなどに保存するときは、Wi-Fi のある場所で行ってください。」(v44)。
   以前は「入力・書き出しできます」だったが、利用者の指摘で直した (ファイルを作るのは端末内でできるが、共有フォルダへの保存は通信が要る)
